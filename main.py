@@ -1,8 +1,9 @@
 # main.py
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 import crud, models, schemas
 from database import engine, get_db
+from utils import process_file
 
 # 모델을 기반으로 데이터베이스 테이블 생성
 models.Base.metadata.create_all(bind=engine)
@@ -10,6 +11,17 @@ models.Base.metadata.create_all(bind=engine)
 # FastAPI 앱 생성
 app = FastAPI()
 
+
+# 파일 업로드 엔드포인트
+@app.post("/uploadfile/")
+async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    # 업로드된 파일을 처리하여 데이터베이스에 삽입
+    try:
+        await process_file(file, db)
+        return {"message": "File processed and data saved successfully."}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
 # 생산 데이터 생성 엔드포인트
 @app.post("/production/", response_model=schemas.Production)
 def create_production(data: schemas.ProductionCreate, db: Session = Depends(get_db)):
