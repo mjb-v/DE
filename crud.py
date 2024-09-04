@@ -73,3 +73,19 @@ def get_inventory_management(db: Session, start_date: str, end_date: str):
     return db.query(models.InventoryManagement).filter(
         models.InventoryManagement.upload_date.between(start_date, end_date)
     ).all()
+
+def update_production_plan(db: Session, plan_id: int, update_data: dict):
+    db_plan = db.query(models.ProductionPlan).filter(models.ProductionPlan.id == plan_id).first()
+    if db_plan:
+        for key, value in update_data.items():
+            setattr(db_plan, key, value)
+        db.commit()
+        db.refresh(db_plan)
+    return db_plan
+
+def delete_production_plan(db: Session, plan_id: int):
+    db_plan = db.query(models.ProductionPlan).filter(models.ProductionPlan.id == plan_id).first()
+    if db_plan:
+        db.delete(db_plan)
+        db.commit()
+    return db_plan
