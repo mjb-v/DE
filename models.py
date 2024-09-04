@@ -21,6 +21,8 @@ class ProductionRecord(Base):
     __tablename__ = "production_records"
 
     id = Column(Integer, primary_key=True, index=True)
+    year = Column(Integer, index=True)
+    month = Column(String, index=True)
     file_path = Column(String)
 
 #재고관리
