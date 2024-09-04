@@ -59,11 +59,11 @@ def calculate_achievement_rate(db: Session, year: int, month: int):
     }
 
 
-def get_monthly_performance(db: Session, year: int, category: str):
+def get_monthly_performance(db: Session, year: int, month: str):
     # 월별 특정 카테고리(유형) 기준의 실적을 조회
-    performance = db.query(models.ProductionPlan).filter(
-        models.ProductionPlan.year == year,
-        models.ProductionPlan.item_name == category
+    performance = db.query(models.ProductionRecord).filter(
+        models.ProductionRecord.year == year,
+        models.ProductionRecord.month == month
     ).all()
     
     # 실적을 기반으로 데이터 가공 (예시)

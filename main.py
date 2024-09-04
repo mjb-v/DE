@@ -1,9 +1,9 @@
 # main.py
 from fastapi import FastAPI, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
-import crud, models, schemas
+import crud, models, schemas, os
 from database import engine, get_db
-from utils import process_file
+
 
 # 모델을 기반으로 데이터베이스 테이블 생성
 models.Base.metadata.create_all(bind=engine)
@@ -22,6 +22,7 @@ def create_production_plan(data: schemas.ProductionPlanCreate, db: Session = Dep
 async def upload_production_record(file: UploadFile = File(...), db: Session = Depends(get_db)):
     try:
         file_location = f"files/{file.filename}"
+        os.makedirs(os.path.dirname(file_location), exist_ok=True)
         with open(file_location, "wb+") as file_object:
             file_object.write(file.file.read())
         
@@ -36,6 +37,7 @@ async def upload_production_record(file: UploadFile = File(...), db: Session = D
 async def upload_inventory_management(file: UploadFile = File(...), db: Session = Depends(get_db)):
     try:
         file_location = f"files/{file.filename}"
+        os.makedirs(os.path.dirname(file_location), exist_ok=True)
         with open(file_location, "wb+") as file_object:
             file_object.write(file.file.read())
         
@@ -63,9 +65,9 @@ def read_achievement_rate(year: int, month: int, db: Session = Depends(get_db)):
     return achievement_rate
 
 # 월 실적 조회
-@app.get("/monthly_performance/{year}/{category}", response_model=dict)
-def read_monthly_performance(year: int, category: str, db: Session = Depends(get_db)):
-    performance = crud.get_monthly_performance(db, year, category)
+@app.get("/monthly_performance/{year}/{month}", response_model=dict)
+def read_monthly_performance(year: int, month: str, db: Session = Depends(get_db)):
+    performance = crud.get_monthly_performance(db, year, month)
     if not performance:
         raise HTTPException(status_code=404, detail="Monthly performance not found")
     return performance
@@ -91,3 +93,4 @@ def delete_production_plan(plan_id: int, db: Session = Depends(get_db)):
     if deleted_plan is None:
         raise HTTPException(status_code=404, detail="Production plan not found")
     return deleted_plan
+
