@@ -77,3 +77,17 @@ def read_inventory_management(start_date: str, end_date: str, db: Session = Depe
     if not inventories:
         raise HTTPException(status_code=404, detail="Inventory records not found")
     return inventories
+
+@app.put("/production_plan/{plan_id}", response_model=schemas.ProductionPlan)
+def update_production_plan(plan_id: int, data: dict, db: Session = Depends(get_db)):
+    updated_plan = crud.update_production_plan(db, plan_id, data)
+    if updated_plan is None:
+        raise HTTPException(status_code=404, detail="Production plan not found")
+    return updated_plan
+
+@app.delete("/production_plan/{plan_id}", response_model=schemas.ProductionPlan)
+def delete_production_plan(plan_id: int, db: Session = Depends(get_db)):
+    deleted_plan = crud.delete_production_plan(db, plan_id)
+    if deleted_plan is None:
+        raise HTTPException(status_code=404, detail="Production plan not found")
+    return deleted_plan
