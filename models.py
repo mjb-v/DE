@@ -1,23 +1,32 @@
 # models.py
-from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Date
+from sqlalchemy.orm import relationship
 from database import Base
 
-# LineProduction 모델
-class LineProduction(Base):
-    __tablename__ = "line_production"
-    id = Column(Integer, primary_key=True, index=True)
-    year = Column(Integer, index=True)
-    line_name = Column(String, index=True)
-    shift = Column(String)
-    month = Column(Integer)
-    production_quantity = Column(Float)
-    defect_quantity = Column(Float)
+#생산계획
+class ProductionPlan(Base):
+    __tablename__ = "production_plans"
 
-# AnnualSummary 모델
-class AnnualSummary(Base):
-    __tablename__ = "annual_summary"
     id = Column(Integer, primary_key=True, index=True)
     year = Column(Integer, index=True)
-    line_name = Column(String, index=True)
-    total_production = Column(Float)
-    total_defects = Column(Float)
+    month = Column(Integer, index=True)
+    injection_line = Column(String, index=True)
+    item_name = Column(String, index=True)
+    item_number = Column(String, index=True)
+    production_quantity = Column(Integer)
+    business_plan = Column(Float)
+
+#생산실적
+class ProductionRecord(Base):
+    __tablename__ = "production_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    file_path = Column(String)
+
+#재고관리
+class InventoryManagement(Base):
+    __tablename__ = "inventory_management"
+
+    id = Column(Integer, primary_key=True, index=True)
+    file_path = Column(String)
+    upload_date = Column(Date, index=True)

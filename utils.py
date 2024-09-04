@@ -1,7 +1,7 @@
 # utils.py
 import pandas as pd
 from sqlalchemy.orm import Session
-from models import LineProduction
+from models import ProductionRecord, InventoryManagement
 from io import BytesIO
 import json
 
@@ -29,22 +29,11 @@ async def process_excel(file, db: Session):
             if pd.isna(row.get('라인')) or pd.isna(row.get('주/야간')):
                 continue
             
-            for month_idx, month in enumerate(["01월", "02월", "03월", "04월", "05월", "06월", 
-                                               "07월", "08월", "09월", "10월", "11월", "12월"], start=1):
-                production = row.get(month)
-                defect_col = f"Unnamed: {df.columns.get_loc(month)+1}"
-                defect = row.get(defect_col)
-                
-                if pd.notna(production) and pd.notna(defect):
-                    production_record = LineProduction(
-                        year=int(file.filename.split('_')[3]),
-                        line_name=row['라인'],
-                        shift=row['주/야간'],
-                        month=month_idx,
-                        production_quantity=production,
-                        defect_quantity=defect
-                    )
-                    db.add(production_record)
+            # 데이터를 적절히 변환
+            file_path = f"files/{file.filename}"
+            production_record = ProductionRecord(file_path=file_path)
+            db.add(production_record)
+    
     db.commit()
 
 async def process_csv(file, db: Session):
@@ -57,22 +46,11 @@ async def process_csv(file, db: Session):
         if pd.isna(row.get('라인')) or pd.isna(row.get('주/야간')):
             continue
         
-        for month_idx, month in enumerate(["01월", "02월", "03월", "04월", "05월", "06월", 
-                                           "07월", "08월", "09월", "10월", "11월", "12월"], start=1):
-            production = row.get(month)
-            defect_col = f"Unnamed: {df.columns.get_loc(month)+1}"
-            defect = row.get(defect_col)
-            
-            if pd.notna(production) and pd.notna(defect):
-                production_record = LineProduction(
-                    year=int(file.filename.split('_')[3]),
-                    line_name=row['라인'],
-                    shift=row['주/야간'],
-                    month=month_idx,
-                    production_quantity=production,
-                    defect_quantity=defect
-                )
-                db.add(production_record)
+        # 데이터를 적절히 변환
+        file_path = f"files/{file.filename}"
+        production_record = ProductionRecord(file_path=file_path)
+        db.add(production_record)
+    
     db.commit()
 
 async def process_json(file, db: Session):
@@ -83,26 +61,9 @@ async def process_json(file, db: Session):
         if '라인' not in entry or '주/야간' not in entry:
             continue
         
-        year = int(file.filename.split('_')[3])
-        line_name = entry['라인']
-        shift = entry['주/야간']
-        
-        for month_idx, month in enumerate(["01월", "02월", "03월", "04월", "05월", "06월", 
-                                           "07월", "08월", "09월", "10월", "11월", "12월"], start=1):
-            production_key = f"{month}_생산량"
-            defect_key = f"{month}_불량량"
-            
-            production = entry.get(production_key)
-            defect = entry.get(defect_key)
-            
-            if production is not None and defect is not None:
-                production_record = LineProduction(
-                    year=year,
-                    line_name=line_name,
-                    shift=shift,
-                    month=month_idx,
-                    production_quantity=production,
-                    defect_quantity=defect
-                )
-                db.add(production_record)
+        # 데이터를 적절히 변환
+        file_path = f"files/{file.filename}"
+        production_record = ProductionRecord(file_path=file_path)
+        db.add(production_record)
+    
     db.commit()
