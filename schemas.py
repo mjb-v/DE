@@ -1,32 +1,47 @@
 # schemas.py
 from pydantic import BaseModel
+from typing import Optional
+from datetime import date
 
-# 생산 데이터 생성용 스키마
-class ProductionCreate(BaseModel):
+class ProductionPlanBase(BaseModel):
     year: int
-    line_name: str
-    shift: str
     month: int
-    production_quantity: float
-    defect_quantity: float
+    injection_line: str
+    item_name: str
+    item_number: str
+    production_quantity: int
+    business_plan: float
 
-# 연간 요약 데이터 생성용 스키마
-class SummaryCreate(BaseModel):
-    year: int
-    line_name: str
-    total_production: float
-    total_defects: float
+class ProductionPlanCreate(ProductionPlanBase):
+    pass
 
-# 생산 데이터 응답 스키마
-class Production(ProductionCreate):
+class ProductionPlan(ProductionPlanBase):
     id: int
 
     class Config:
-        orm_mode = True
+        orm_mode: True
 
-# 연간 요약 데이터 응답 스키마
-class Summary(SummaryCreate):
+class ProductionRecordBase(BaseModel):
+    file_path: str
+
+class ProductionRecordCreate(ProductionRecordBase):
+    pass
+
+class ProductionRecord(ProductionRecordBase):
     id: int
 
     class Config:
-        orm_mode = True
+        orm_mode: True
+
+class InventoryManagementBase(BaseModel):
+    file_path: str
+    upload_date: date
+
+class InventoryManagementCreate(InventoryManagementBase):
+    pass
+
+class InventoryManagement(InventoryManagementBase):
+    id: int
+
+    class Config:
+        orm_mode: True

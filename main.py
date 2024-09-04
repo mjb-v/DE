@@ -11,41 +11,69 @@ models.Base.metadata.create_all(bind=engine)
 # FastAPI 앱 생성
 app = FastAPI()
 
+# CREATE
+# 생산 계획 엔드포인트
+@app.post("/production_plan/", response_model=schemas.ProductionPlan)
+def create_production_plan(data: schemas.ProductionPlanCreate, db: Session = Depends(get_db)):
+    return crud.create_production_plan(db, data)
 
-# 파일 업로드 엔드포인트
-@app.post("/uploadfile/")
-async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    # 업로드된 파일을 처리하여 데이터베이스에 삽입
+# 생산 실적 엔드포인트
+@app.post("/production_record/")
+async def upload_production_record(file: UploadFile = File(...), db: Session = Depends(get_db)):
     try:
-        await process_file(file, db)
-        return {"message": "File processed and data saved successfully."}
-    except ValueError as ve:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(ve))
+        file_location = f"files/{file.filename}"
+        with open(file_location, "wb+") as file_object:
+            file_object.write(file.file.read())
+        
+        # 데이터베이스에 기록
+        db_record = crud.create_production_record(db, file_location)
+        return {"message": "Production record uploaded successfully."}
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="An error occurred while processing the file.")
-    
-# 생산 데이터 생성 엔드포인트
-@app.post("/production/", response_model=schemas.Production)
-def create_production(data: schemas.ProductionCreate, db: Session = Depends(get_db)):
-    return crud.create_production(db, data)
+        raise HTTPException(status_code=400, detail=str(e))
 
-# 연간 요약 데이터 생성 엔드포인트
-@app.post("/summary/", response_model=schemas.Summary)
-def create_summary(data: schemas.SummaryCreate, db: Session = Depends(get_db)):
-    return crud.create_summary(db, data)
+# 재고관리 엔드포인트
+@app.post("/inventory_management/")
+async def upload_inventory_management(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    try:
+        file_location = f"files/{file.filename}"
+        with open(file_location, "wb+") as file_object:
+            file_object.write(file.file.read())
+        
+        # 데이터베이스에 기록
+        db_record = crud.create_inventory_management(db, file_location)
+        return {"message": "Inventory management record uploaded successfully."}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-# 특정 라인의 생산 데이터 조회 엔드포인트
-@app.get("/production/{year}/{line_name}", response_model=list[schemas.Production])
-def read_production(year: str, line_name: str, db: Session = Depends(get_db)):
-    data = crud.get_production(db, year, line_name)
-    if not data:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Production data not found for the given year and line name.")
-    return data
+#READ
+# 연도생산계획 조회
+@app.get("/production_plan/{year}", response_model=list[schemas.ProductionPlan])
+def read_production_plan(year: int, db: Session = Depends(get_db)):
+    plans = crud.get_production_plans(db, year)
+    if not plans:
+        raise HTTPException(status_code=404, detail="Production plans not found")
+    return plans
 
-# 특정 라인의 연간 요약 데이터 조회 엔드포인트
-@app.get("/summary/{year}/{line_name}", response_model=schemas.Summary)
-def read_summary(year: str, line_name: str, db: Session = Depends(get_db)):
-    summary = crud.get_summary(db, year, line_name)
-    if not summary:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Summary not found for the given year and line name.")
-    return summary
+# 월별달성률 조회
+@app.get("/achievement_rate/{year}/{month}", response_model=dict)
+def read_achievement_rate(year: int, month: int, db: Session = Depends(get_db)):
+    achievement_rate = crud.calculate_achievement_rate(db, year, month)
+    if not achievement_rate:
+        raise HTTPException(status_code=404, detail="Achievement rate not found")
+    return achievement_rate
+
+# 월 실적 조회
+@app.get("/monthly_performance/{year}/{category}", response_model=dict)
+def read_monthly_performance(year: int, category: str, db: Session = Depends(get_db)):
+    performance = crud.get_monthly_performance(db, year, category)
+    if not performance:
+        raise HTTPException(status_code=404, detail="Monthly performance not found")
+    return performance
+
+# 재고관리 조회
+@app.get("/inventory_management/", response_model=list[schemas.InventoryManagement])
+def read_inventory_management(start_date: str, end_date: str, db: Session = Depends(get_db)):
+    inventories = crud.get_inventory_management(db, start_date, end_date)
+    if not inventories:
+        raise HTTPException(status_code=404, detail="Inventory records not found")
+    return inventories
