@@ -3,7 +3,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 import crud, models, schemas, datetime
 from database import get_db
-
+from sqlalchemy import extract, func
 
 
 app = FastAPI()
@@ -58,6 +58,39 @@ def delete_production(production_id: int, db: Session = Depends(get_db)):
     db.commit()
     
     return {"detail": "Production record deleted successfully"}
+
+@app.get("/achievement-rate/{year}/{month}")
+def get_achievement_rate(year: int, month: int, db: Session = Depends(get_db)):
+    # 1. 월별 총 생산량 집계
+    total_production_quantity = db.query(func.sum(models.Production.production_quantity)).filter(
+        extract('year', models.Production.date) == year,
+        extract('month', models.Production.date) == month
+    ).scalar()  # scalar()는 단일 값 반환
+
+    # 2. 해당 월의 생산계획 조회
+    plan = db.query(models.Plan).filter(
+        models.Plan.month == month
+    ).first()
+
+    if not plan:
+        raise HTTPException(status_code=404, detail="생산 계획을 찾을 수 없습니다.")
+    
+    if total_production_quantity is None:
+        total_production_quantity = 0  # 생산량이 없으면 0으로 처리
+
+    # 3. 달성률 계산 (계획된 생산량 대비 실제 생산량)
+    try:
+        achievement_rate = (total_production_quantity / plan.quantity_plan) * 100
+    except ZeroDivisionError:
+        achievement_rate = 0  # 계획이 0일 경우 달성률은 0
+
+    return {
+        "year": year,
+        "month": month,
+        "total_production_quantity": total_production_quantity,
+        "planned_quantity": plan.quantity_plan,
+        "achievement_rate": achievement_rate
+    }
 
 # CREATE: 재고 관리 생성
 @app.post("/inventory_management/", response_model=schemas.InventoryManagementCreate)
