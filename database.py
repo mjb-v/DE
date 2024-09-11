@@ -2,9 +2,11 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-
+from dotenv import load_dotenv
+import os
 # SQLite 데이터베이스 URL
-DATABASE_URL = "sqlite:///./production.db"
+load_dotenv()
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # SQLAlchemy 엔진 생성
 engine = create_engine(DATABASE_URL)
