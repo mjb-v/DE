@@ -24,13 +24,12 @@ def create_plan(db: Session, plan: schemas.PlanBase):
     return db_plan
 
 def get_all_plans(db: Session, year: int, month: int) -> schemas.PlanResponse:
-    total_plan_quantity = db.query(Plan).filter(Plan.year == year, Plan.month == month).with_entities(func.sum(Plan.plan_quantity)).scalar() 
+    total_plan_quantity = db.query(Plan).filter(Plan.year == year, Plan.month == month).with_entities(func.sum(Plan.plan_quantity)).scalar() or 0
+    total_business_plan = db.query(Plan).filter(Plan.year == year, Plan.month == month).with_entities(func.sum(Plan.plan_quantity * Plan.price)).scalar() or 0
 
-    total_business_plan = db.query(Plan).filter(Plan.year == year, Plan.month == month).with_entities(func.sum(Plan.plan_quantity * Plan.price)).scalar() 
+    total_production_quantity = db.query(Production).filter(Production.date.between(f'{year}-{month:02d}-01', f'{year}-{month:02d}-31')).with_entities(func.sum(Production.production_quantity)).scalar() or 0
 
-    total_production_quantity = db.query(Production).filter(Production.date.between(f'{year}-{month:02d}-01', f'{year}-{month:02d}-31')).with_entities(func.sum(Production.production_quantity)).scalar() 
-
-    total_business_actual = db.query(Production).filter(Production.date.between(f'{year}-{month:02d}-01', f'{year}-{month:02d}-31')).with_entities(func.sum(Production.production_quantity * Production.price)).scalar() 
+    total_business_actual = db.query(Production).filter(Production.date.between(f'{year}-{month:02d}-01', f'{year}-{month:02d}-31')).with_entities(func.sum(Production.production_quantity * Production.price)).scalar() or 0
 
     production_achievement_rate = (total_production_quantity / total_plan_quantity) * 100 if total_plan_quantity > 0 else 0
     business_achievement_rate = (total_business_actual / total_business_plan) * 100 if total_business_plan > 0 else 0
